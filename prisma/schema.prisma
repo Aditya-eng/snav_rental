@@ -1,0 +1,369 @@
+// SNAV rental platform schema.
+// Money is stored as integer paise. Status/enum-like fields are plain strings so the
+// schema works unchanged on SQLite (local dev) and PostgreSQL (production).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String
+  passwordHash String
+  role         String   @default("CUSTOMER") // CUSTOMER | ADMIN | OPERATIONS | ACCOUNTS
+  accountType  String   @default("INDIVIDUAL") // INDIVIDUAL | BUSINESS
+  companyName  String?
+  gstin        String?
+  addressLine  String?
+  city         String?
+  state        String?
+  pincode      String?
+  kycStatus    String   @default("NOT_SUBMITTED") // NOT_SUBMITTED | PENDING | VERIFIED | REJECTED
+  kycNote      String?
+  blocked      Boolean  @default(false)
+  payLater     Boolean  @default(false) // trusted account: may book without advance payment
+  adminNotes   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookings       Booking[]
+  kycDocs        KycDocument[]
+  tickets        Ticket[]
+  passwordResets PasswordReset[]
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model KycDocument {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  docType   String // PAN | AADHAAR | GST | COMPANY | OTHER
+  fileRef   String
+  fileName  String
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  sortOrder   Int       @default(0)
+  products    Product[]
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  brand            String   @default("eSurvey")
+  categoryId       String
+  category         Category @relation(fields: [categoryId], references: [id])
+  tagline          String?
+  description      String
+  specs            String   @default("[]") // JSON: [{ "label": string, "value": string }]
+  features         String   @default("[]") // JSON: string[]
+  tags             String   @default("") // comma separated, used for filters
+  imageUrl         String?
+  datasheetUrl     String?
+  rentable         Boolean  @default(true)
+  dailyRate        Int      @default(0)
+  weeklyRate       Int      @default(0)
+  monthlyRate      Int      @default(0)
+  deposit          Int      @default(0)
+  forSale          Boolean  @default(true)
+  salePrice        Int? // null => "price on request"
+  featured         Boolean  @default(false)
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  units        Unit[]
+  bookingItems BookingItem[]
+  enquiries    Enquiry[]
+}
+
+model Unit {
+  id           String    @id @default(cuid())
+  productId    String
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  serialNumber String    @unique
+  status       String    @default("ACTIVE") // ACTIVE | MAINTENANCE | RETIRED
+  condition    String    @default("Good")
+  firmware     String?
+  purchaseDate DateTime?
+  purchaseCost Int? // paise, used for payback reports
+  notes        String?
+  createdAt    DateTime  @default(now())
+
+  assignments BookingUnit[]
+  maintenance MaintenanceLog[]
+}
+
+model MaintenanceLog {
+  id        String    @id @default(cuid())
+  unitId    String
+  unit      Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  kind      String // MAINTENANCE | CALIBRATION | REPAIR | FIRMWARE
+  note      String
+  cost      Int       @default(0)
+  date      DateTime
+  nextDue   DateTime?
+  createdBy String?
+  createdAt DateTime  @default(now())
+}
+
+model Service {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String
+  dailyRate   Int
+  sacCode     String?
+  active      Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  items       BookingItem[]
+}
+
+model City {
+  id              String    @id @default(cuid())
+  name            String
+  state           String
+  deliveryFee     Int       @default(0)
+  pickupAvailable Boolean   @default(false)
+  officeAddress   String?
+  active          Boolean   @default(true)
+  sortOrder       Int       @default(0)
+  bookings        Booking[]
+}
+
+model Booking {
+  id                  String    @id @default(cuid())
+  code                String    @unique
+  userId              String
+  user                User      @relation(fields: [userId], references: [id])
+  // PENDING_PAYMENT | REQUESTED | CONFIRMED | DISPATCHED | RETURNED | COMPLETED | CANCELLED
+  status              String    @default("REQUESTED")
+  startDate           DateTime
+  endDate             DateTime
+  days                Int
+  fulfillment         String // DELIVERY | PICKUP
+  cityId              String
+  city                City      @relation(fields: [cityId], references: [id])
+  deliveryAddress     String?
+  deliveryPincode     String?
+  contactName         String
+  contactPhone        String
+  customerNotes       String?
+  billingName         String
+  billingGstin        String?
+  billingAddress      String
+  billingState        String
+  paymentPlan         String    @default("FULL") // FULL | ADVANCE | PAY_LATER
+  subtotal            Int
+  discount            Int       @default(0)
+  couponCode          String?
+  deliveryFee         Int       @default(0)
+  taxableAmount       Int
+  cgst                Int       @default(0)
+  sgst                Int       @default(0)
+  igst                Int       @default(0)
+  deposit             Int       @default(0)
+  lateFee             Int       @default(0)
+  damageCharge        Int       @default(0)
+  amountPaid          Int       @default(0)
+  depositRefunded     Int       @default(0)
+  depositStatus       String    @default("NONE") // NONE | HELD | SETTLED
+  invoiceNo           String?   @unique
+  invoiceDate         DateTime?
+  agreementName       String?
+  agreementAcceptedAt DateTime?
+  agreementIp         String?
+  dispatchedAt        DateTime?
+  returnedAt          DateTime?
+  cancelReason        String?
+  adminNotes          String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  items       BookingItem[]
+  units       BookingUnit[]
+  payments    Payment[]
+  inspections Inspection[]
+  extensions  ExtensionRequest[]
+  events      BookingEvent[]
+  tickets     Ticket[]
+}
+
+model BookingItem {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  kind        String // RENTAL | SERVICE
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  name        String
+  sacCode     String?
+  quantity    Int
+  days        Int
+  unitAmount  Int // price for one unit for the whole period
+  amount      Int // unitAmount * quantity
+  pricingNote String
+  deposit     Int      @default(0) // total deposit for this line
+}
+
+model BookingUnit {
+  id        String  @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  unitId    String
+  unit      Unit    @relation(fields: [unitId], references: [id])
+
+  @@unique([bookingId, unitId])
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  bookingId         String
+  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  kind              String   @default("PAYMENT") // PAYMENT | REFUND
+  method            String // RAZORPAY | CASH | UPI | BANK | CHEQUE
+  status            String   @default("PAID") // CREATED | PAID | FAILED
+  amount            Int
+  razorpayOrderId   String?  @unique
+  razorpayPaymentId String?
+  reference         String?
+  note              String?
+  recordedBy        String?
+  createdAt         DateTime @default(now())
+}
+
+model Inspection {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  stage     String // DISPATCH | RETURN
+  checklist String   @default("{}") // JSON: { [item]: boolean }
+  notes     String?
+  photos    String   @default("[]") // JSON: string[] (storage refs)
+  createdBy String?
+  createdAt DateTime @default(now())
+}
+
+model ExtensionRequest {
+  id         String   @id @default(cuid())
+  bookingId  String
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  newEndDate DateTime
+  extraDays  Int
+  amount     Int // extra charge incl. GST
+  status     String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt  DateTime @default(now())
+}
+
+model BookingEvent {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  message   String
+  actor     String?
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  description String?
+  percentOff  Int? // 1..100
+  flatOff     Int? // paise
+  minOrder    Int       @default(0)
+  maxUses     Int?
+  used        Int       @default(0)
+  validFrom   DateTime?
+  validTo     DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+model Enquiry {
+  id        String    @id @default(cuid())
+  kind      String // RENTAL_QUOTE | PURCHASE | GENERAL
+  name      String
+  email     String
+  phone     String
+  company   String?
+  city      String?
+  productId String?
+  product   Product?  @relation(fields: [productId], references: [id])
+  quantity  Int?
+  duration  String?
+  startDate DateTime?
+  message   String
+  status    String    @default("NEW") // NEW | CONTACTED | CLOSED
+  createdAt DateTime  @default(now())
+}
+
+model Ticket {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  bookingId String?
+  booking   Booking?        @relation(fields: [bookingId], references: [id])
+  subject   String
+  status    String          @default("OPEN") // OPEN | CLOSED
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  messages  TicketMessage[]
+}
+
+model TicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorName String
+  fromStaff  Boolean  @default(false)
+  body       String
+  createdAt  DateTime @default(now())
+}
+
+model Testimonial {
+  id        String  @id @default(cuid())
+  name      String
+  company   String?
+  quote     String
+  rating    Int     @default(5)
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model Faq {
+  id        String  @id @default(cuid())
+  question  String
+  answer    String
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model Setting {
+  key   String @id
+  value String
+}

@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SNAV — DGPS / GNSS rental & sales website
 
-## Getting Started
+Rent eSurvey GNSS receivers by the day, week or month (cheapest combination applied automatically), with delivery across Indian cities or office pickup, add-on operators/trainers, KYC, GST invoices, deposits and a full admin panel. Every instrument can also be enquired about for purchase.
 
-First, run the development server:
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env        # then set AUTH_SECRET (see the file)
+npx prisma db push          # creates prisma/dev.db (SQLite)
+npx prisma db seed          # catalog, cities, services, FAQs, admin login (printed once)
+npm run dev                 # http://localhost:3000  — admin at /admin
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What's where
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Area | Path |
+| --- | --- |
+| Public site, cart, checkout, account | `src/app/(site)` |
+| Admin panel | `src/app/admin` |
+| GST invoice & rental agreement (printable) | `src/app/documents` |
+| Pricing engine (day/week/month optimiser) | `src/lib/pricing.ts` |
+| Availability (stock per product per day) | `src/lib/availability.ts` |
+| Quote / GST / coupons | `src/lib/quote.ts`, `src/lib/gst.ts` |
+| Booking money, invoice numbers, payments | `src/lib/booking.ts` |
+| Razorpay, email, file storage | `src/lib/razorpay.ts`, `src/lib/notify.ts`, `src/lib/storage.ts` |
+| Database schema / seed data | `prisma/schema.prisma`, `prisma/seed.ts` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Money is stored in paise. Rental dates are inclusive (5→7 Oct = 3 days).
 
-## Learn More
+## Before going live — checklist
 
-To learn more about Next.js, take a look at the following resources:
+1. **Admin → Products & pricing**: replace the placeholder rates, deposits and sale prices; upload product photos.
+2. **Admin → Products → (product) → Units**: add your real serial numbers, then retire/delete the `DEMO-…` units.
+3. **Admin → Cities & delivery**: set real delivery fees and your office address(es) for pickup.
+4. **Admin → Services**: confirm operator/trainer day rates.
+5. **Admin → Settings**: legal name, address, state, GSTIN, PAN, phone/WhatsApp, admin alert email, bank/UPI details, rental terms.
+6. Have your CA confirm the SAC codes (rental `997319`, operator `998343`, training `999293`) and GST treatment, and a lawyer review the rental terms.
+7. Change the admin password (My profile) and add staff under **Admin → Staff**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploying (Vercel + PostgreSQL)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. In `prisma/schema.prisma` change `provider = "sqlite"` to `provider = "postgresql"`.
+2. Create a Postgres database (Neon via the Vercel Marketplace, or Supabase) and set `DATABASE_URL`.
+3. Create a Vercel Blob store (private) and connect it — this sets `BLOB_READ_WRITE_TOKEN`.
+4. Set env vars from `.env.example`: `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL=https://snavindia.com`, `CRON_SECRET`, and optionally Razorpay + Resend keys.
+5. Deploy, then run once against the production DB: `npx prisma db push && npx prisma db seed`.
+6. Add `snavindia.com` (and `www`) to the Vercel project and point DNS at Vercel.
+7. Razorpay → Webhooks: `https://snavindia.com/api/razorpay/webhook`, events `payment.captured` and `order.paid`, secret = `RAZORPAY_WEBHOOK_SECRET`.
+8. Resend: verify the `snavindia.com` domain so emails come from `no-reply@snavindia.com`.
 
-## Deploy on Vercel
+The daily cron (`vercel.json`) emails return reminders and an overdue summary.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Without the optional services
+- **No Razorpay keys** → bookings are placed as *requests*; staff confirm and record UPI/bank payments manually.
+- **No Resend key** → emails are logged to the server console instead of sent.
+- **No Blob token** → uploads are written to `./storage` (local development only).
