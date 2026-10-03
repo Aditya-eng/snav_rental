@@ -25,7 +25,7 @@ export default async function EquipmentPage(props: PageProps<"/equipment">) {
     ...(mode === "buy" ? { forSale: true } : { rentable: true }),
     ...(category ? { category: { slug: category } } : {}),
     ...(tag ? { tags: { contains: tag } } : {}),
-    ...(q ? { OR: [{ name: { contains: q } }, { tagline: { contains: q } }, { description: { contains: q } }] } : {}),
+    ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { tagline: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }] } : {}),
   };
 
   const [products, categories, allTags] = await Promise.all([

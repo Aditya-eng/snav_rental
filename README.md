@@ -6,8 +6,8 @@ Rent eSurvey GNSS receivers by the day, week or month (cheapest combination appl
 
 ```bash
 npm install
-cp .env.example .env        # then set AUTH_SECRET (see the file)
-npx prisma db push          # creates prisma/dev.db (SQLite)
+cp .env.example .env        # set AUTH_SECRET and the dev database URLs (see the file)
+npx prisma db push          # creates the tables
 npx prisma db seed          # catalog, cities, services, FAQs, admin login (printed once)
 npm run dev                 # http://localhost:3000  — admin at /admin
 ```
@@ -38,16 +38,20 @@ Money is stored in paise. Rental dates are inclusive (5→7 Oct = 3 days).
 6. Have your CA confirm the SAC codes (rental `997319`, operator `998343`, training `999293`) and GST treatment, and a lawyer review the rental terms.
 7. Change the admin password (My profile) and add staff under **Admin → Staff**.
 
-## Deploying (Vercel + PostgreSQL)
+## Hosting (live setup)
 
-1. In `prisma/schema.prisma` change `provider = "sqlite"` to `provider = "postgresql"`.
-2. Create a Postgres database (Neon via the Vercel Marketplace, or Supabase) and set `DATABASE_URL`.
-3. Create a Vercel Blob store (private) and connect it — this sets `BLOB_READ_WRITE_TOKEN`.
-4. Set env vars from `.env.example`: `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL=https://snavindia.com`, `CRON_SECRET`, and optionally Razorpay + Resend keys.
-5. Deploy, then run once against the production DB: `npx prisma db push && npx prisma db seed`.
-6. Add `snavindia.com` (and `www`) to the Vercel project and point DNS at Vercel.
-7. Razorpay → Webhooks: `https://snavindia.com/api/razorpay/webhook`, events `payment.captured` and `order.paid`, secret = `RAZORPAY_WEBHOOK_SECRET`.
-8. Resend: verify the `snavindia.com` domain so emails come from `no-reply@snavindia.com`.
+- **Vercel project** `snav` (team ADOS), functions in `sin1` (Singapore).
+- **Neon Postgres**: `snav-db` (production + preview) and `snav-db-dev` (local development), both in Singapore.
+- **Vercel Blob**: private store `snav-files` for KYC documents, inspection photos and product images.
+- Env vars on Vercel: `DATABASE_URL`/`DATABASE_URL_UNPOOLED` (Neon), `BLOB_READ_WRITE_TOKEN`, `AUTH_SECRET`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`.
+
+Deploy: `npx vercel deploy --prod` (or connect the GitHub repo in Vercel for auto-deploys).
+
+**Schema changes:** after editing `prisma/schema.prisma`, run `npx prisma db push` against the dev database, then against production
+(`npx vercel env pull .env.prod.tmp --environment production`, load it, `npx prisma db push`, delete the file) before deploying.
+
+**Later:** Razorpay — set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` and add the webhook
+`https://snavindia.com/api/razorpay/webhook` (events `payment.captured`, `order.paid`). Email — set `RESEND_API_KEY` after verifying `snavindia.com` in Resend.
 
 The daily cron (`vercel.json`) emails return reminders and an overdue summary.
 

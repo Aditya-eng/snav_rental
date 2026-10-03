@@ -18,7 +18,7 @@ export default async function CustomersPage(props: PageProps<"/admin/customers">
     role: "CUSTOMER",
     ...(kyc ? { kycStatus: kyc } : {}),
     ...(q
-      ? { OR: [{ name: { contains: q } }, { email: { contains: q.toLowerCase() } }, { phone: { contains: q } }, { companyName: { contains: q } }] }
+      ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { email: { contains: q.toLowerCase() } }, { phone: { contains: q, mode: "insensitive" } }, { companyName: { contains: q, mode: "insensitive" } }] }
       : {}),
   };
   const customers = await db.user.findMany({

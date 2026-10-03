@@ -1,0 +1,11 @@
+.env
+.env.local
+.env.*.local
+*.tmp
+storage
+prisma/*.db
+.next
+node_modules
+.agents
+.claude
+skills-lock.json

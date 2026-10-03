@@ -42,10 +42,10 @@ export default async function AdminBookings(props: PageProps<"/admin/bookings">)
       ? {
           OR: [
             { code: { contains: q.toUpperCase() } },
-            { user: { name: { contains: q } } },
-            { user: { phone: { contains: q } } },
+            { user: { name: { contains: q, mode: "insensitive" } } },
+            { user: { phone: { contains: q, mode: "insensitive" } } },
             { user: { email: { contains: q.toLowerCase() } } },
-            { billingName: { contains: q } },
+            { billingName: { contains: q, mode: "insensitive" } },
           ],
         }
       : {}),
