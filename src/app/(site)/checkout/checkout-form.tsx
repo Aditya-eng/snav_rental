@@ -270,7 +270,10 @@ export function CheckoutForm({
                 onChange={(e) => set("agreementAccepted", e.target.checked)}
                 required
               />
-              I have read and agree to the rental terms above.
+              <span>
+                I am 18 or older, and I have read and agree to the rental terms above and the{" "}
+                <Link href="/refund-policy" target="_blank" className="font-medium text-orange-700">cancellation &amp; refund policy</Link>.
+              </span>
             </label>
             <Field label="Type your full name to sign">
               <Input value={d.agreementName} onChange={(e) => set("agreementName", e.target.value)} required placeholder={user.name} />

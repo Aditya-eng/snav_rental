@@ -30,7 +30,7 @@ model User {
   blocked      Boolean  @default(false)
   payLater     Boolean  @default(false) // trusted account: may book without advance payment
   adminNotes   String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime @default(now()) // sign-up requires the 18+ / terms & privacy consent, so this is also the consent time
   updatedAt    DateTime @updatedAt
 
   bookings       Booking[]

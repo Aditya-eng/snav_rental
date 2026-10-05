@@ -177,6 +177,7 @@ export async function saveSettingsAction(_prev: ActionState, form: FormData): Pr
     if (form.has(key)) values[key] = str(form, key);
   }
   if (values.gstin && !isValidGstin(values.gstin)) return fail("Company GSTIN looks invalid.");
+  if (values.grievanceEmail && !isValidEmail(values.grievanceEmail)) return fail("Grievance officer email looks invalid.");
   if (values.state && !(INDIAN_STATES as readonly string[]).includes(values.state)) return fail("Choose the company's state.");
   for (const k of ["gstRate", "advancePercent", "lateFeeMultiplier", "minLeadDays"] as const) {
     if (values[k] !== undefined && (!Number.isFinite(Number(values[k])) || Number(values[k]) < 0)) return fail(`${k} must be a number.`);

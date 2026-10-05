@@ -38,6 +38,7 @@ export async function register(_prev: ActionState, form: FormData): Promise<Acti
   if (password.length < 8) return fail("Password must be at least 8 characters.");
   if (accountType === "BUSINESS" && !companyName) return fail("Please enter your company name.");
   if (gstin && !isValidGstin(gstin)) return fail("That GSTIN doesn't look right. Please check it.");
+  if (form.get("consent") !== "on") return fail("Please confirm you are 18 or older and accept the terms and privacy policy.");
   if (await db.user.findUnique({ where: { email } })) return fail("An account with this email already exists. Try logging in.");
 
   const user = await db.user.create({

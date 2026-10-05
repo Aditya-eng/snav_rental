@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { submitEnquiry } from "@/app/(site)/actions";
 import { ActionForm, SubmitButton } from "./forms";
 import { Field, Input, Select, Textarea } from "./ui";
@@ -67,6 +68,10 @@ export function EnquiryForm({
       </Field>
       <div className="sm:col-span-2">
         <SubmitButton size="lg" pendingText="Sending…">Send enquiry</SubmitButton>
+        <p className="mt-3 text-xs text-slate-500">
+          We use these details only to reply to your enquiry. See our{" "}
+          <Link href="/privacy" className="font-medium text-orange-700">privacy policy</Link>.
+        </p>
       </div>
     </ActionForm>
   );

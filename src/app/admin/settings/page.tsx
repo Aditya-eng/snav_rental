@@ -57,6 +57,18 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
+          <CardHeader
+            title="Grievance officer"
+            subtitle="Required by the DPDP Act and E-Commerce Rules. Shown in the footer, on Contact and in the Privacy policy. Blank fields fall back to the public email/phone."
+          />
+          <div className="grid gap-4 p-5 sm:grid-cols-3">
+            <Field label="Name and designation"><Input name="grievanceName" defaultValue={s.grievanceName} placeholder="e.g. A. Garg, Director" /></Field>
+            <Field label="Email"><Input name="grievanceEmail" type="email" defaultValue={s.grievanceEmail} /></Field>
+            <Field label="Phone"><Input name="grievancePhone" defaultValue={s.grievancePhone} /></Field>
+          </div>
+        </Card>
+
+        <Card>
           <CardHeader title="Billing & rental rules" />
           <div className="grid gap-4 p-5 sm:grid-cols-3">
             <Field label="GST rate %"><Input name="gstRate" inputMode="decimal" defaultValue={s.gstRate} /></Field>
@@ -75,6 +87,13 @@ export default async function SettingsPage() {
           <CardHeader title="Rental terms" subtitle="Shown at checkout, on /terms and in every rental agreement. Have a lawyer review these." />
           <div className="p-5">
             <Textarea name="rentalTerms" defaultValue={s.rentalTerms} rows={14} aria-label="Rental terms" />
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Cancellation & refund policy" subtitle="Shown on /refund-policy and linked at checkout." />
+          <div className="p-5">
+            <Textarea name="refundPolicy" defaultValue={s.refundPolicy} rows={12} aria-label="Cancellation and refund policy" />
           </div>
         </Card>
 

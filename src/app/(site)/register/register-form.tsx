@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { register } from "../auth-actions";
 import { ActionForm, SubmitButton } from "@/components/forms";
-import { Field, Input } from "@/components/ui";
+import { Checkbox, Field, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 export function RegisterForm({ next }: { next: string }) {
@@ -48,6 +49,18 @@ export function RegisterForm({ next }: { next: string }) {
       <Field label="Password" hint="At least 8 characters.">
         <Input name="password" type="password" autoComplete="new-password" minLength={8} required />
       </Field>
+      <Checkbox
+        name="consent"
+        required
+        label={
+          <>
+            I am 18 or older and agree to the{" "}
+            <Link href="/terms" target="_blank" className="font-medium text-orange-700">rental terms</Link> and{" "}
+            <Link href="/privacy" target="_blank" className="font-medium text-orange-700">privacy policy</Link>, including the use of my
+            details and KYC documents to process rentals.
+          </>
+        }
+      />
       <SubmitButton className="w-full" size="lg" pendingText="Creating account…">Create account</SubmitButton>
     </ActionForm>
   );

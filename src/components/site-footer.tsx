@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { getSettings } from "@/lib/settings";
+import { getSettings, grievanceContact } from "@/lib/settings";
 import { Container } from "./ui";
 import { Logo } from "./logo";
 
 export async function SiteFooter() {
   const s = await getSettings();
+  const g = grievanceContact(s);
   return (
     <footer className="mt-auto bg-navy-950 text-slate-300">
       <Container className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
@@ -31,6 +32,7 @@ export async function SiteFooter() {
             <li><Link className="hover:text-white" href="/quote">Bulk / long-term quote</Link></li>
             <li><Link className="hover:text-white" href="/faq">FAQ</Link></li>
             <li><Link className="hover:text-white" href="/terms">Rental terms</Link></li>
+            <li><Link className="hover:text-white" href="/refund-policy">Cancellation & refunds</Link></li>
             <li><Link className="hover:text-white" href="/privacy">Privacy policy</Link></li>
           </ul>
         </div>
@@ -46,9 +48,21 @@ export async function SiteFooter() {
         </div>
       </Container>
       <div className="border-t border-white/10">
-        <Container className="flex flex-col gap-2 py-5 text-xs text-slate-500 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} {s.legalName}. All rights reserved.</p>
-          <p>eSurvey and product names are trademarks of their respective owners.</p>
+        <Container className="space-y-2 py-5 text-xs text-slate-500">
+          <p>
+            {s.legalName}
+            {s.address ? ` · ${s.address}` : ""}
+            {s.gstin ? ` · GSTIN ${s.gstin}` : ""}
+          </p>
+          <p>
+            Grievance Officer: {g.name} ·{" "}
+            <a className="hover:text-white" href={`mailto:${g.email}`}>{g.email}</a>
+            {g.phone ? ` · ${g.phone}` : ""}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+            <p>© {new Date().getFullYear()} {s.legalName}. All rights reserved.</p>
+            <p>eSurvey and product names are trademarks of their respective owners.</p>
+          </div>
         </Container>
       </div>
     </footer>

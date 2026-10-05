@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { db } from "@/lib/db";
-import { getSettings } from "@/lib/settings";
+import { getSettings, grievanceContact } from "@/lib/settings";
 import { getCurrentUser } from "@/lib/auth";
 import { whatsappLink } from "@/lib/utils";
 import { Card, Container } from "@/components/ui";
@@ -17,6 +17,7 @@ export default async function ContactPage() {
     db.city.findMany({ where: { active: true, pickupAvailable: true }, orderBy: { sortOrder: "asc" } }),
   ]);
   const wa = s.whatsapp || s.phone;
+  const g = grievanceContact(s);
   return (
     <Container className="py-12">
       <h1 className="text-3xl font-bold tracking-tight text-slate-900">Contact us</h1>
@@ -39,6 +40,16 @@ export default async function ContactPage() {
             ) : null}
             <p className="flex gap-3"><Mail className="size-5 text-orange-600" aria-hidden /><a href={`mailto:${s.email}`} className="font-medium text-slate-900">{s.email}</a></p>
             <p className="flex gap-3"><MapPin className="size-5 shrink-0 text-orange-600" aria-hidden /><span className="text-slate-700">{s.address}</span></p>
+          </Card>
+          <Card className="p-6 text-sm">
+            <h2 className="font-semibold text-slate-900">Grievance Officer</h2>
+            <p className="mt-2 text-slate-700">
+              {g.name}, {s.legalName}
+              <br />
+              <a href={`mailto:${g.email}`} className="font-medium text-orange-700">{g.email}</a>
+              {g.phone ? <><br />{g.phone}</> : null}
+            </p>
+            <p className="mt-2 text-xs text-slate-500">For complaints about orders, refunds or your personal data. We acknowledge within 48 hours and resolve within 30 days.</p>
           </Card>
           {offices.length ? (
             <Card className="p-6 text-sm">
