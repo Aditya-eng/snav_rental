@@ -15,6 +15,7 @@ const NAV: { href: string; label: string; section: Section }[] = [
   { href: "/admin/calendar", label: "Calendar", section: "calendar" },
   { href: "/admin/products", label: "Products & pricing", section: "products" },
   { href: "/admin/units", label: "Fleet & maintenance", section: "units" },
+  { href: "/admin/import", label: "Import (CSV)", section: "products" },
   { href: "/admin/customers", label: "Customers & KYC", section: "customers" },
   { href: "/admin/enquiries", label: "Enquiries", section: "enquiries" },
   { href: "/admin/tickets", label: "Support", section: "tickets" },
